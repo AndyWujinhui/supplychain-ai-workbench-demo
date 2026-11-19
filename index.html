@@ -365,7 +365,7 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
 @media(max-width:1780px){table{min-width:980px} #table .products-col{display:none}}
 @media(max-width:1560px){main{grid-template-columns:minmax(0,1fr) 460px}}
 @media(min-width:901px){
-  main{grid-template-rows:minmax(0,.85fr) minmax(0,1.15fr)}
+  main{grid-template-rows:minmax(0,1.05fr) minmax(0,.95fr)}
   .tw,.dw{overscroll-behavior:contain}
 }
 @media(max-width:1400px){
@@ -373,6 +373,11 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
   .brand{flex:1 1 100%}
   .stats{margin-left:0;flex-wrap:wrap;height:auto;max-width:100%}
   .st{padding:4px 16px;min-width:90px}
+}
+@media(min-width:1100px) and (max-width:1400px){
+  header{height:58px;min-height:58px;flex-wrap:nowrap;padding:0 20px;gap:16px}
+  .brand{flex:1 1 0}
+  .stats{flex:0 0 auto;margin-left:auto}
 }
 @media(max-width:900px){
   main{grid-template-columns:minmax(0,1fr);
@@ -9522,7 +9527,7 @@ function exportReportChart(card){
 function draw(){
   if($('workbench').hidden)return;
   const box=$('svg').parentElement.getBoundingClientRect();
-  const W=Math.max(560,box.width),H=Math.max(280,box.height);
+  const W=Math.max(560,box.width),H=Math.max(160,box.height);
   const M={t:26,r:20,b:40,l:46};
   const pw=W-M.l-M.r,ph=H-M.t-M.b;
   const X=s=>M.l+s/100*pw, Y=s=>M.t+(100-s)/100*ph;
@@ -9562,14 +9567,18 @@ function draw(){
   yt.textContent='业务价值（100 分制加权得分）';
 
   /* 真实坐标 + 最小位移解重叠 */
-  const pts=view.filter(hasScore).map(r=>({r,x:X(r.diff),y:Y(r.val),ox:X(r.diff),oy:Y(r.val),rr:rad(r.effort)}));
+  const pts=view.filter(hasScore).sort((a,b)=>a.uid.localeCompare(b.uid))
+    .map(r=>({r,x:X(r.diff),y:Y(r.val),ox:X(r.diff),oy:Y(r.val),rr:rad(r.effort)}));
   for(let it=0;it<140;it++){
     let moved=false;
     for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
       const a=pts[i],b=pts[j];
       let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),need=a.rr+b.rr+1.6;
       if(d<need){
-        if(d<.01){dx=(Math.random()-.5);dy=(Math.random()-.5);d=Math.hypot(dx,dy)||1}
+        if(d<.01){
+          const angle=(Number(a.r.id)*31+Number(b.r.id)*17)%360*Math.PI/180;
+          dx=Math.cos(angle);dy=Math.sin(angle);d=1;
+        }
         const push=(need-d)/2/d;
         a.x-=dx*push;a.y-=dy*push;b.x+=dx*push;b.y+=dy*push;moved=true;
       }
