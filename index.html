@@ -143,7 +143,8 @@ header{flex:0 0 auto;display:flex;align-items:center;gap:26px;padding:0 20px;hei
 .report-card svg{display:block;width:100%;height:auto;font-family:inherit}
 .report-card .chart-note{font-size:11px;color:var(--cp-text-muted);line-height:1.6;margin-top:12px}
 .report-chart-item{cursor:pointer;outline:none}
-.report-chart-item:hover .report-mark,.report-chart-item:focus .report-mark{stroke:var(--cp-text);stroke-width:2}
+.report-chart-item:hover .report-mark:not(circle),.report-chart-item:focus .report-mark:not(circle){stroke:var(--cp-text);stroke-width:2}
+.report-chart-item:hover circle.report-mark,.report-chart-item:focus circle.report-mark{opacity:.8}
 .report-chart-item:focus text{text-decoration:underline}
 .report-facts{list-style:none;display:grid;gap:12px}
 .report-facts li{padding-left:12px;border-left:3px solid var(--cp-accent);font-size:12px;line-height:1.7;overflow-wrap:anywhere}
@@ -486,7 +487,7 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
         <div id="categoryChart"></div><p class="chart-note" id="categoryNote"></p>
       </article>
       <article class="report-card" id="productCard">
-        <div class="report-card-head"><div><h3>场景按产品类型分布</h3><p>历史建议产品栈 · 同一场景可涉及多个产品</p></div><button class="export-chart" data-export="productCard" aria-label="导出产品类型 SVG">导出 SVG</button></div>
+        <div class="report-card-head"><div><h3>场景按产品类型分布</h3><p>圆环展示产品引用构成 · 同一场景可涉及多个产品</p></div><button class="export-chart" data-export="productCard" aria-label="导出产品类型 SVG">导出 SVG</button></div>
         <div id="productChart"></div><p class="chart-note" id="productNote"></p>
       </article>
     </div>
@@ -9321,6 +9322,9 @@ const reportPercent=(value,total)=>total?(value/total*100).toFixed(1)+'%':'—';
 const reportColors={reference:'--cp-accent',new:'--cp-warning',updated:'--cp-danger',
   'GO-LIVE':'--cp-success',POC:'--cp-accent','Not Start':'--cp-border-strong','未填写':'--cp-text-soft',
   'Quick Win':'--cp-accent',QA:'--cp-warning'};
+const productColors={'Agent':'--cp-accent','AI Tools / AI Builder':'--cp-link','Workflow':'--cp-success',
+  'Dataverse':'--cp-warning','Power Apps':'--cp-text-soft','Power BI':'--cp-danger',
+  'Power Automate（RPA）':'--cp-border-strong'};
 function reportGroups(rows,values){
   const counts=new Map();
   rows.forEach(r=>new Set(values(r)).forEach(value=>counts.set(value,(counts.get(value)||0)+1)));
@@ -9344,9 +9348,9 @@ function reportText(text,x,y,width,fill='--cp-text',size=14){
   return `<text x="${x}" y="${y}" fill="var(${fill})" font-size="${size}">${reportLines(text,width)
     .map((line,i)=>`<tspan x="${x}" dy="${i?17:0}">${esc(line)}</tspan>`).join('')}</text>`;
 }
-function reportItem(d){
+function reportItem(d,unit='条'){
   return d.filter&&d.count?`class="report-chart-item" role="button" tabindex="0" data-report-filter="${esc(d.filter)}"
-    data-report-value="${esc(d.value)}" aria-label="${esc(d.label)}：${d.count} 条，点击筛选"`:'';
+    data-report-value="${esc(d.value)}" aria-label="${esc(d.label)}：${d.count} ${esc(unit)}，点击筛选"`:'';
 }
 function reportBars(groups,total,title){
   const width=760,left=296,plot=328,rowHeight=50,height=Math.max(120,groups.length*rowHeight+48);
@@ -9373,24 +9377,35 @@ function reportBars(groups,total,title){
   });
   return svg+'</svg>';
 }
-function reportDonut(groups,total,title){
+function reportDonut(groups,total,title,options={}){
+  const wide=options.layout==='wide',unit=options.unit||'条';
+  const width=wide?760:400,height=wide?448:Math.max(324,194+groups.length*32);
+  const cx=wide?160:200,cy=wide?210:95,radius=wide?116:63,stroke=wide?40:24;
+  const legendX=wide?326:8,legendY=wide?58:182,rowHeight=wide?48:32;
+  const labelX=wide?356:38,countX=wide?664:305,percentX=wide?750:382;
+  const labelWidth=wide?270:250;
   let offset=0;
   const segments=groups.map(d=>{
     const percent=total?d.count/total*100:0,start=offset;offset+=percent;
-    return percent?`<circle cx="200" cy="95" r="63" fill="none" stroke="var(${d.color})" stroke-width="24"
-      pathLength="100" stroke-dasharray="${percent} ${100-percent}" stroke-dashoffset="${-start}" transform="rotate(-90 200 95)"/>`:'';
+    return percent?`<g ${reportItem(d,unit)}><title>${esc(d.label)}：${d.count} ${esc(unit)}，占 ${reportPercent(d.count,total)}</title>
+      <circle class="report-mark" cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="var(${d.color})" stroke-width="${stroke}"
+      pathLength="100" stroke-dasharray="${percent} ${100-percent}" stroke-dashoffset="${-start}" transform="rotate(-90 ${cx} ${cy})"/></g>`:'';
   }).join('');
-  return `<svg xmlns="${NS}" viewBox="0 0 400 324" role="group" aria-label="${esc(title)}">
-    <title>${esc(title)}</title><desc>合计 ${total} 条。${esc(groups.map(d=>`${d.label} ${d.count} 条`).join('；'))}</desc>
-    <circle cx="200" cy="95" r="63" fill="none" stroke="var(--cp-border)" stroke-width="24"/>${segments}
-    <text x="200" y="99" text-anchor="middle" fill="var(--cp-text)" font-size="34" font-weight="700">${total}</text>
-    <text x="200" y="122" text-anchor="middle" fill="var(--cp-text-muted)" font-size="13">${total?'场景总数':'暂无匹配'}</text>
+  return `<svg xmlns="${NS}" viewBox="0 0 ${width} ${height}" role="group" aria-label="${esc(title)}">
+    <title>${esc(title)}</title><desc>合计 ${total} ${esc(unit)}。${esc(groups.map(d=>`${d.label} ${d.count} ${unit}`).join('；'))}</desc>
+    <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="var(--cp-border)" stroke-width="${stroke}"/>${segments}
+    <text x="${cx}" y="${cy+4}" text-anchor="middle" fill="var(--cp-text)" font-size="${wide?44:34}" font-weight="700">${total}</text>
+    <text x="${cx}" y="${cy+27}" text-anchor="middle" fill="var(--cp-text-muted)" font-size="13">${total?esc(options.centerLabel||'场景总数'):'暂无匹配'}</text>
+    ${wide?`<text x="${cx}" y="${cy+51}" text-anchor="middle" fill="var(--cp-text-soft)" font-size="12">${esc(options.subtitle||'')}</text>
+      <text x="${countX}" y="28" text-anchor="end" fill="var(--cp-text-muted)" font-size="12">场景数</text>
+      <text x="${percentX}" y="28" text-anchor="end" fill="var(--cp-text-muted)" font-size="12">引用占比</text>`:''}
     ${groups.map((d,i)=>`<g ${reportItem(d)} data-label="${esc(d.label)}" data-count="${d.count}">
-      <rect x="8" y="${182+i*32}" width="384" height="30" fill="var(--cp-surface)" fill-opacity="0" pointer-events="all"/>
-      <rect class="report-mark" x="16" y="${190+i*32}" width="11" height="11" rx="3" fill="var(${d.color})"/>
-      <text x="38" y="${201+i*32}" fill="var(--cp-text)" font-size="14">${esc(d.label)}</text>
-      <text x="305" y="${201+i*32}" text-anchor="end" fill="var(--cp-text)" font-size="15" font-weight="650">${d.count}</text>
-      <text x="382" y="${201+i*32}" text-anchor="end" fill="var(--cp-text-muted)" font-size="13">${reportPercent(d.count,total)}</text></g>`).join('')}
+      <title>${esc(d.label)}：${d.count} ${esc(unit)}，占 ${reportPercent(d.count,total)}</title>
+      <rect x="${legendX}" y="${legendY+i*rowHeight}" width="${width-legendX-8}" height="${rowHeight-2}" fill="var(--cp-surface)" fill-opacity="0" pointer-events="all"/>
+      <rect class="report-mark" x="${legendX+8}" y="${legendY+8+i*rowHeight}" width="11" height="11" rx="3" fill="var(${d.color})"/>
+      ${reportText(d.label,labelX,legendY+19+i*rowHeight,labelWidth)}
+      <text x="${countX}" y="${legendY+19+i*rowHeight}" text-anchor="end" fill="var(--cp-text)" font-size="15" font-weight="650">${d.count}</text>
+      <text x="${percentX}" y="${legendY+19+i*rowHeight}" text-anchor="end" fill="var(--cp-text-muted)" font-size="13">${reportPercent(d.count,total)}</text></g>`).join('')}
     </svg>`;
 }
 function renderReport(){
@@ -9416,8 +9431,11 @@ function renderReport(){
     <strong>${value}</strong><small>${esc(note)}</small></div>`).join('');
   $('categoryChart').innerHTML=reportBars(categories.map(d=>({...d,filter:'fCategory',value:d.label})),total,'场景按类别分布');
   $('categoryNote').textContent=`分母为当前 ${total} 条场景；每条需求归属一个业务类别，按需求明细的类别顺序展示。点击条形可联动筛选。`;
-  $('productChart').innerHTML=reportBars(products.map(d=>({...d,filter:'fProd',value:productFilters.get(d.label)})),scored.length,'场景按产品类型分布');
-  $('productNote').textContent=`分母为 ${scored.length} 条有历史评估的场景；同一产品在单场景内只计 1 次，跨产品合计可超过 100%。另有 ${pending} 条待评估，未推断其产品归属。`;
+  const productTotal=products.reduce((sum,d)=>sum+d.count,0);
+  $('productChart').innerHTML=reportDonut(products.map(d=>({...d,color:productColors[d.label]||'--cp-border-strong',
+    filter:'fProd',value:productFilters.get(d.label)})),productTotal,'场景按产品类型分布',
+    {layout:'wide',unit:'次',centerLabel:'产品引用次数',subtitle:`${scored.length} 条已评估场景`});
+  $('productNote').textContent=`圆环占比以 ${productTotal} 次产品引用为分母，来自 ${scored.length} 条有历史评估的场景；同一产品在单场景内只计 1 次，同一场景可涉及多个产品。图例场景数按产品分别去重。另有 ${pending} 条待评估，未推断其产品归属。点击圆环或图例可联动筛选。`;
   const distribution=(key,definitions,filter)=>definitions.map(([value,label])=>({
     value,label,filter,count:view.filter(r=>(r[key]||'未填写')===value).length,color:reportColors[value]
   }));
