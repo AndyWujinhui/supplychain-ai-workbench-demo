@@ -277,6 +277,9 @@ td{padding:7px 10px;border-bottom:1px solid var(--trow);vertical-align:middle}
 tbody tr{cursor:pointer}
 tbody tr:hover{background:var(--trh)}
 tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
+#table .category-cell{min-width:100px;text-align:center;font-weight:650;color:var(--cp-text);
+  background:var(--cp-surface-soft);border-right:1px solid var(--cp-border);cursor:default}
+#table tr.category-start>td{border-top:1px solid var(--cp-border-strong)}
 .cl1{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nm{font-weight:600;color:var(--tx);display:block;max-width:320px;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
@@ -358,7 +361,7 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--sb);border-radius:5px;border:2px solid var(--bg)}
 ::-webkit-scrollbar-thumb:hover{background:var(--sbh)}
-@media(max-width:1780px){table{min-width:880px} th:nth-child(9),td:nth-child(9){display:none}}
+@media(max-width:1780px){table{min-width:980px} #table .products-col{display:none}}
 @media(max-width:1560px){main{grid-template-columns:minmax(0,1fr) 460px}}
 @media(max-width:1400px){
   header{height:auto;min-height:58px;flex-wrap:wrap;gap:8px;padding:10px 20px}
@@ -385,13 +388,13 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
 </header>
 <details class="syncnote">
   <summary>本次更新：51 条有效需求 · 新增 15 条 · 移除 1 条 · 已上线 1 条 / POC 7 条 · 展开查看成果与统计口径</summary>
-  <p>明确记录的成果：<button data-open="UC-01">数据资产治理</button>已实现“异常扫描 → 任务分发 → Teams 用户查阅”；
-    <button data-open="UC-47">Software PSI Analysis</button>已完成 Python Task1 分类校验与修正、Task2 层级聚合，整体仍处于 POC，Copilot Studio 集成属于期望目标。</p>
-  <p>以 Use Case 明细为准：保留 Excel ID，排除第 41 行重复表头（ID 40），纳入 ID 52；原“CI建议箱”已移除。
+  <p>明确记录的成果：<button data-open="UC-36">数据资产治理</button>已实现“异常扫描 → 任务分发 → Teams 用户查阅”；
+    <button data-open="UC-43">Software PSI Analysis</button>已完成 Python Task1 分类校验与修正、Task2 层级聚合，整体仍处于 POC，Copilot Studio 集成属于期望目标。</p>
+  <p>以 Use Case 明细为准：按业务类别重排并连续编号为 UC-01～UC-51，保留原始 Excel ID 及来源行以便追溯；排除第 41 行重复表头（源 ID 40），纳入源 ID 52；原“CI建议箱”已移除。
     项目状态共 1 条 GO-LIVE、7 条 POC、42 条未开始、1 条未填写；Case Type 共 13 条 Quick Win、2 条 QA、36 条未填写。
     类型和 Quick Win 栏的 Y/方案描述不代表交付完成；源表未提供统一的实际收益或验收指标。</p>
   <p>原有 35 条需求评分、条件与方案仅保留为历史参考，未经本次重新评估，不是 Excel 的项目结果。
-    15 条新增需求及 UC-03（航期信息采集，痛点及负责人已更新）待评估，不计入象限与人日合计。同步日期不是业务完成日期。</p>
+    15 条新增需求及 UC-22（航期信息采集，痛点及负责人已更新）待评估，不计入象限与人日合计。同步日期不是业务完成日期。</p>
 </details>
 <nav class="viewbar" aria-label="视图切换">
   <div class="seg" id="viewSwitch">
@@ -421,6 +424,7 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
     <select id="fSt"><option value="">全部条件状态</option><option value="ok">无未满足条件</option><option value="unmet">存在未满足条件</option><option value="clean">待确认 ≤1 项</option><option value="checking">无未满足，但仍待确认</option><option value="met">全部条件满足（历史）</option></select>
     <select id="fCond"><option value="">全部条件项</option></select>
     <select id="fFunc"><option value="">全部部门</option></select>
+    <select id="fCategory" aria-label="业务类别"><option value="">全部类别</option></select>
     <select id="fProd"><option value="">全部产品</option></select>
     <select id="fVal"><option value="">业务价值不限</option><option value="80">≥80 分</option><option value="60">≥60 分</option><option value="40">≥40 分</option></select>
     <select id="fDif"><option value="">技术难度不限</option><option value="l40">≤40 分</option><option value="l60">≤60 分</option><option value="g60">&gt;60 分</option></select>
@@ -445,10 +449,11 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
     </div>
   </section>
   <section class="pane" id="table">
-    <div class="ph"><h2>需求明细</h2><span class="hint">点击表头排序 · 点击行联动图表</span>
+    <div class="ph"><h2>需求明细</h2><span class="hint">默认按业务类别排列 · 点击表头排序 · 点击行联动图表</span>
       <span class="right" id="tCount"></span></div>
     <div class="pb"><div class="tw">
       <table><thead><tr>
+        <th data-k="category" style="width:108px">类别</th>
         <th data-k="uid" class="nw" style="width:62px">编号</th>
         <th data-k="name">需求 / 案例类型</th>
         <th data-k="function" style="width:92px">部门</th>
@@ -457,7 +462,7 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
         <th data-k="val" class="nw" style="width:108px">业务价值</th>
         <th data-k="effort" class="nw" style="width:104px">工作量</th>
         <th data-k="needsRPA" class="nw" style="width:54px">RPA</th>
-        <th data-k="products" style="width:220px">产品栈</th>
+        <th data-k="products" class="products-col" style="width:220px">产品栈</th>
         <th data-k="projectStatus" class="nw">项目状态</th>
       </tr></thead><tbody id="tb"></tbody></table>
     </div></div>
@@ -470,15 +475,15 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
 <section id="report" aria-label="场景汇报总览" hidden>
   <div class="report-sheet">
     <div class="report-heading">
-      <div><h1>供应链 · 场景组合与产品布局</h1><p>用例规模、部门覆盖与方案产品构成</p></div>
+      <div><h1>供应链 · 场景组合与产品布局</h1><p>用例规模、类别覆盖与方案产品构成</p></div>
       <p>数据同步：2026-09-15<br>统计单位：场景 / 条</p>
     </div>
     <div class="report-scope" id="reportScope"></div>
     <div class="report-kpis" id="reportKpis"></div>
     <div class="report-grid">
-      <article class="report-card" id="deptCard">
-        <div class="report-card-head"><div><h3>场景按部门分布</h3><p>保留源表部门粒度 · 按场景数降序</p></div><button class="export-chart" data-export="deptCard" aria-label="导出部门分布 SVG">导出 SVG</button></div>
-        <div id="deptChart"></div><p class="chart-note" id="deptNote"></p>
+      <article class="report-card" id="categoryCard">
+        <div class="report-card-head"><div><h3>场景按类别分布</h3><p>按业务类别归集 · 与需求明细分类口径一致</p></div><button class="export-chart" data-export="categoryCard" aria-label="导出类别分布 SVG">导出 SVG</button></div>
+        <div id="categoryChart"></div><p class="chart-note" id="categoryNote"></p>
       </article>
       <article class="report-card" id="productCard">
         <div class="report-card-head"><div><h3>场景按产品类型分布</h3><p>历史建议产品栈 · 同一场景可涉及多个产品</p></div><button class="export-chart" data-export="productCard" aria-label="导出产品类型 SVG">导出 SVG</button></div>
@@ -514,7 +519,7 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
         <ul class="report-facts" id="reportFacts"></ul>
       </article>
     </div>
-    <p class="report-note">统计口径：部门、项目进展、评估状态、案例类型均按去重场景计数；产品图按场景内去重、产品间可重复计数。历史评估不表示本次已复核，待评估不表示不适配。Quick Win / QA 标签不代表已经交付。</p>
+    <p class="report-note">统计口径：业务类别、项目进展、评估状态、案例类型均按去重场景计数；每条需求归属一个业务类别，业务类别不等同于 Quick Win / QA 案例类型；产品图按场景内去重、产品间可重复计数。历史评估不表示本次已复核，待评估不表示不适配。Quick Win / QA 标签不代表已经交付。</p>
   </div>
 </section>
 <div id="tip"></div>
@@ -8608,7 +8613,7 @@ const DATA=[
     "sourceWarning": ""
   },
   {
-    "name": "基础设施事业部 供应链管理 DEMAND & 业务数据平台PLY PIPELINE/供应链管理 AGENT",
+    "name": "基础设施事业部 供应链管理 DEMAND & SUPPLY PIPELINE/供应链管理 AGENT",
     "status_src": "Not Start",
     "raiser": "业务联系人38",
     "function": "供应链管理",
@@ -8627,7 +8632,7 @@ const DATA=[
     "sourceRow": 44,
     "sourceFields": {
       "A": "43",
-      "B": "基础设施事业部 供应链管理 DEMAND & 业务数据平台PLY PIPELINE/供应链管理 AGENT",
+      "B": "基础设施事业部 供应链管理 DEMAND & SUPPLY PIPELINE/供应链管理 AGENT",
       "C": "Not Start",
       "D": "业务联系人38",
       "E": "供应链管理",
@@ -9258,6 +9263,27 @@ const DATA=[
     "sourceWarning": "源表未填写项目状态、期望结果及开发负责人，需补充后评估。"
   }
 ];
+const CATEGORY_GROUPS=[
+  {label:'供需计划',ids:[43,19,27,12,26,45,11,42,9]},
+  {label:'采购与物料',ids:[14,15,10,24,17,21,44]},
+  {label:'订单与物流',ids:[18,36,48,20,13,3,50,49]},
+  {label:'制造与质量',ids:[16,30,41,31,37,46,38,28,34,32]},
+  {label:'供应链支撑',ids:[7,1,2,6,39,8]},
+  {label:'财务协同',ids:[23,25]},
+  {label:'通用业务支撑',ids:[47,5,29,51,33]},
+  {label:'平台与开发',ids:[52,4,35,22]}
+];
+const categoryById=new Map(CATEGORY_GROUPS.flatMap(group=>group.ids.map(id=>[String(id),group.label])));
+if(categoryById.size!==DATA.length||CATEGORY_GROUPS.reduce((n,group)=>n+group.ids.length,0)!==DATA.length)
+  throw new Error('业务分类必须完整覆盖每条需求且不得重复');
+DATA.forEach(r=>{
+  if(!categoryById.has(r.id))throw new Error('需求缺少业务类别：'+r.uid);
+  r.category=categoryById.get(r.id);
+});
+const displayOrder=new Map(CATEGORY_GROUPS.flatMap(group=>group.ids).map((id,index)=>[String(id),index]));
+const categoryOrder=new Map(CATEGORY_GROUPS.map((group,index)=>[group.label,index]));
+DATA.sort((a,b)=>displayOrder.get(a.id)-displayOrder.get(b.id));
+DATA.forEach((r,index)=>{r.uid='UC-'+String(index+1).padStart(2,'0')});
 const $=i=>document.getElementById(i);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uq=a=>[...new Set(a.filter(Boolean))].sort((x,y)=>String(x).localeCompare(String(y),'zh-CN'));
@@ -9279,6 +9305,7 @@ const vColor=s=>s>=70?'var(--met)':s>=45?'var(--ac)':'var(--dm)';
 uq(DATA.map(x=>x.projectStatus)).forEach(x=>$('fProject').add(new Option(projectLabel({projectStatus:x}),x)));
 uq(DATA.map(x=>x.caseType||'未填写')).forEach(x=>$('fType').add(new Option(x,x)));
 uq(DATA.map(x=>x.function)).forEach(x=>$('fFunc').add(new Option(x,x)));
+CATEGORY_GROUPS.forEach(group=>$('fCategory').add(new Option(group.label,group.label)));
 uq(DATA.flatMap(x=>x.short.map(s=>s.t))).forEach(x=>$('fProd').add(new Option(x,x)));
 uq(DATA.flatMap(x=>x.conditions.map(c=>c.t))).forEach(x=>{
   $('fCond').add(new Option(x.length>26?x.slice(0,26)+'…':x,x))});
@@ -9368,7 +9395,8 @@ function reportDonut(groups,total,title){
 }
 function renderReport(){
   const total=view.length,scored=view.filter(hasScore),pending=total-scored.length;
-  const departments=reportGroups(view,r=>[r.function||'未填写']);
+  const categories=reportGroups(view,r=>[r.category]).sort((a,b)=>
+    CATEGORY_GROUPS.findIndex(group=>group.label===a.label)-CATEGORY_GROUPS.findIndex(group=>group.label===b.label));
   const products=reportGroups(scored,r=>r.products);
   const activeProjects=view.filter(r=>['GO-LIVE','POC'].includes(r.projectStatus)).length;
   const productFilters=new Map(DATA.flatMap(r=>r.products.map((p,i)=>[p,r.short[i].t])));
@@ -9379,15 +9407,15 @@ function renderReport(){
   $('reportScopeSecond').textContent=scope;
   const kpis=[
     ['场景总数',total,`全部有效场景 ${DATA.length} 条`],
-    ['覆盖部门',departments.filter(d=>d.label!=='未填写').length,'按源表部门粒度计数'],
+    ['覆盖类别',categories.length,`当前覆盖 ${categories.length} / ${CATEGORY_GROUPS.length} 个业务类别`],
     ['已上线 / POC',activeProjects,`占当前场景 ${reportPercent(activeProjects,total)} · 非验收率`],
     ['历史评估覆盖',scored.length,`覆盖率 ${reportPercent(scored.length,total)} · 未重新复核`],
     ['待评估场景',pending,`占当前场景 ${reportPercent(pending,total)} · 不计历史评分`]
   ];
   $('reportKpis').innerHTML=kpis.map(([label,value,note])=>`<div class="report-kpi"><div class="label">${label}</div>
     <strong>${value}</strong><small>${esc(note)}</small></div>`).join('');
-  $('deptChart').innerHTML=reportBars(departments.map(d=>({...d,filter:'fFunc',value:d.label})),total,'场景按部门分布');
-  $('deptNote').textContent=`分母为当前 ${total} 条场景；每条场景归属一个源表部门，不合并不同 Procurement 子部门。`;
+  $('categoryChart').innerHTML=reportBars(categories.map(d=>({...d,filter:'fCategory',value:d.label})),total,'场景按类别分布');
+  $('categoryNote').textContent=`分母为当前 ${total} 条场景；每条需求归属一个业务类别，按需求明细的类别顺序展示。点击条形可联动筛选。`;
   $('productChart').innerHTML=reportBars(products.map(d=>({...d,filter:'fProd',value:productFilters.get(d.label)})),scored.length,'场景按产品类型分布');
   $('productNote').textContent=`分母为 ${scored.length} 条有历史评估的场景；同一产品在单场景内只计 1 次，跨产品合计可超过 100%。另有 ${pending} 条待评估，未推断其产品归属。`;
   const distribution=(key,definitions,filter)=>definitions.map(([value,label])=>({
@@ -9414,8 +9442,9 @@ function renderReport(){
   if(!total){
     $('reportFacts').innerHTML='<li>当前筛选没有匹配场景，请清除或调整上方筛选条件。</li>';return;
   }
-  const top=departments[0],facts=[
-    `场景最多的部门：<strong>${esc(top.label)}</strong>，${top.count} 条，占当前场景 ${reportPercent(top.count,total)}。`,
+  const maxCount=Math.max(...categories.map(category=>category.count));
+  const topCategories=categories.filter(category=>category.count===maxCount),facts=[
+    `场景最多的类别：<strong>${topCategories.map(category=>esc(category.label)).join('、')}</strong>，${topCategories.length>1?'各 ':''}${maxCount} 条，占当前场景${topCategories.length>1?'各':''} ${reportPercent(maxCount,total)}。`,
     `推进情况：<strong>${view.filter(r=>r.projectStatus==='GO-LIVE').length} 条已上线、${view.filter(r=>r.projectStatus==='POC').length} 条 POC</strong>。源表未提供统一验收或实际收益指标。`,
     `评估待办：<strong>${pending} 条待评估</strong>；${unmet} 条历史评估存在未满足条件，实施前需复核。`
   ];
@@ -9646,9 +9675,16 @@ function renderTable(){
   document.querySelectorAll('th .ar').forEach(e=>e.remove());
   const th=document.querySelector(`th[data-k="${sortK}"]`);
   if(th)th.insertAdjacentHTML('beforeend',`<span class="ar">${asc?'▲':'▼'}</span>`);
-  if(!view.length){$('tb').innerHTML='<tr><td colspan="10"><div class="empty">当前筛选条件下没有匹配的需求</div></td></tr>';
+  if(!view.length){$('tb').innerHTML='<tr><td colspan="11"><div class="empty">当前筛选条件下没有匹配的需求</div></td></tr>';
     $('tCount').textContent='0 条';return}
-  $('tb').innerHTML=view.map(r=>`<tr data-uid="${r.uid}" class="${sel===r.uid?'sel':''}">
+  const categorySpans=new Map();
+  for(let start=0;start<view.length;){
+    let end=start+1;
+    while(end<view.length&&view[end].category===view[start].category)end++;
+    categorySpans.set(start,end-start);start=end;
+  }
+  $('tb').innerHTML=view.map((r,index)=>`<tr data-uid="${r.uid}" class="${sel===r.uid?'sel ':''}${categorySpans.has(index)?'category-start':''}">
+   ${categorySpans.has(index)?`<td class="category-cell" rowspan="${categorySpans.get(index)}">${esc(r.category)}</td>`:''}
    <td class="num nw" style="color:var(--mu)">${r.uid}</td>
    <td><span class="nm" title="${esc(r.name)}">${esc(r.name)}</span><span class="sb">${esc(projectLabel(r))} · ${esc(r.caseType||'类型未填写')} · ${esc(r.raiser||'提出人未填写')}</span></td>
    <td style="color:var(--mu)"><span class="cl1" title="${esc(r.function)}">${esc(r.function)}</span></td>
@@ -9658,11 +9694,11 @@ function renderTable(){
    <td class="nw">${hasScore(r)?`<div class="sc100"><span class="n">${r.effort}</span>
      <span class="bar"><i style="width:${Math.round((r.effort-EMIN)/(EMAX-EMIN)*100)}%;background:linear-gradient(90deg,var(--ac),var(--cy))"></i></span></div>`:'待评估'}</td>
    <td class="nw" style="color:${r.needsRPA==='是'?'var(--am)':'var(--dm)'}">${esc(r.needsRPA)}</td>
-   <td><div class="tags">${!hasScore(r)?'待评估':r.short.slice(0,3).map(s=>`<span class="tg ${s.x?'x':''}">${esc(s.t)}</span>`).join('')}${r.short.length>3?`<span class="tg more" title="${esc(r.short.slice(3).map(s=>s.t).join(' · '))}">+${r.short.length-3}</span>`:''}</div></td>
+   <td class="products-col"><div class="tags">${!hasScore(r)?'待评估':r.short.slice(0,3).map(s=>`<span class="tg ${s.x?'x':''}">${esc(s.t)}</span>`).join('')}${r.short.length>3?`<span class="tg more" title="${esc(r.short.slice(3).map(s=>s.t).join(' · '))}">+${r.short.length-3}</span>`:''}</div></td>
    <td class="nw"><span class="b ${projectClass(r)}">${esc(projectLabel(r))}</span></td>
   </tr>`).join('');
   $('tb').querySelectorAll('tr[data-uid]').forEach(tr=>{
-    tr.onclick=()=>show(tr.dataset.uid);
+    tr.onclick=event=>{if(!event.target.closest('.category-cell'))show(tr.dataset.uid)};
     tr.onmouseenter=()=>{const n=document.querySelector(`.node[data-uid="${tr.dataset.uid}"]`);
       if(n)document.querySelectorAll('.node').forEach(o=>{if(o!==n)o.classList.add('dim')})};
     tr.onmouseleave=()=>document.querySelectorAll('.node').forEach(o=>o.classList.remove('dim'));
@@ -9676,7 +9712,7 @@ function show(uid){
   const ICO={met:'✓',check:'!',unmet:'✕'};
   $('dw').innerHTML=`
   <div class="dhead">
-    <div class="dmeta">${r.uid} · Excel ID ${esc(r.id)} · Use Case 第 ${r.sourceRow} 行 · ${esc(r.function||'部门未填写')}</div>
+    <div class="dmeta">${r.uid} · ${esc(r.category)} · 源表 ID ${esc(r.id)} · Use Case 第 ${r.sourceRow} 行 · ${esc(r.function||'部门未填写')}</div>
     <h3>${esc(r.name)}</h3>
     <div class="bd">
       <span class="b ${projectClass(r)}">${esc(projectLabel(r))}</span>
@@ -9748,22 +9784,22 @@ function show(uid){
 }
 function apply(){
   const q=$('q').value.trim().toLowerCase();
-  const st=$('fSt').value,cd=$('fCond').value,fn=$('fFunc').value,
+  const st=$('fSt').value,cd=$('fCond').value,fn=$('fFunc').value,category=$('fCategory').value,
         pr=$('fProd').value,vl=$('fVal').value,df=$('fDif').value,
         ps=$('fProject').value,ct=$('fType').value,assessment=$('fAssessment').value;
-  [['fSt',st],['fCond',cd],['fFunc',fn],['fProd',pr],['fVal',vl],['fDif',df],
+  [['fSt',st],['fCond',cd],['fFunc',fn],['fCategory',category],['fProd',pr],['fVal',vl],['fDif',df],
     ['fProject',ps],['fType',ct],['fAssessment',assessment]]
     .forEach(([id,v])=>$(id).classList.toggle('act',!!v));
   view=DATA.filter(r=>{
     const b=(r.uid+r.name+r.pain+r.outcome+r.raiser+r.function+r.developers+r.quickWinCS
       +r.quickWinM365+r.comments+r.systems_src+r.products.join()+r.caseType
-      +r.status_src+projectLabel(r)+r.recordedResult).toLowerCase();
+      +r.status_src+projectLabel(r)+r.recordedResult+r.category).toLowerCase();
     const so=!st||(hasScore(r)&&(st==='ok'?r.nUnmet===0:st==='unmet'?r.nUnmet>0:
       st==='checking'?(r.nUnmet===0&&r.nCheck>0):st==='met'?(r.nUnmet===0&&r.nCheck===0):(r.nUnmet===0&&r.nCheck<=1)));
     const co=!cd||r.conditions.some(c=>c.t===cd&&c.s!=='met');
     const vo=!vl||(hasScore(r)&&r.val>=+vl);
     const dfo=!df||(hasScore(r)&&(df==='l40'?r.diff<=40:df==='l60'?r.diff<=60:r.diff>60));
-    return (!q||b.includes(q))&&so&&co&&(!fn||r.function===fn)
+    return (!q||b.includes(q))&&so&&co&&(!fn||r.function===fn)&&(!category||r.category===category)
       &&(!pr||r.short.some(s=>s.t===pr))&&vo&&dfo&&inQ(r,quad)
       &&(!ps||r.projectStatus===ps)&&(!ct||(r.caseType||'未填写')===ct)
       &&(!assessment||(assessment==='reference'?hasScore(r):assessment==='pending'?!hasScore(r):r.assessmentState===assessment));
@@ -9778,6 +9814,7 @@ function apply(){
 }
 function sortView(){
   view.sort((a,b)=>{let x=a[sortK],y=b[sortK];
+    if(sortK==='category'){x=categoryOrder.get(a.category);y=categoryOrder.get(b.category)}
     if(['diff','val','effort','nMet','needsRPA','products'].includes(sortK)&&hasScore(a)!==hasScore(b))
       return hasScore(a)?-1:1;
     if(Array.isArray(x))x=x.length; if(Array.isArray(y))y=y.length;
@@ -9799,7 +9836,7 @@ function setQ(k){quad=k;
   document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.q===k));
   apply()}
 $('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setQ(b.dataset.q)});
-const filterIds=['q','fSt','fCond','fFunc','fProd','fVal','fDif','fProject','fType','fAssessment'];
+const filterIds=['q','fSt','fCond','fFunc','fCategory','fProd','fVal','fDif','fProject','fType','fAssessment'];
 filterIds.forEach(i=>
   $(i).addEventListener(i==='q'?'input':'change',apply));
 $('rst').onclick=()=>{filterIds.forEach(i=>$(i).value='');setQ('')};
@@ -9836,7 +9873,7 @@ addEventListener('afterprint',()=>{
   draw();
 });
 document.querySelectorAll('th[data-k]').forEach(t=>t.onclick=()=>{
-  const k=t.dataset.k; if(sortK===k)asc=!asc; else{sortK=k;asc=(k==='uid'||k==='name'||k==='function')}
+  const k=t.dataset.k; if(sortK===k)asc=!asc; else{sortK=k;asc=(k==='uid'||k==='name'||k==='function'||k==='category')}
   sortView();if(sel)show(sel);else renderTable()});
 const THKEY='supplychain-original-theme';
 function setTheme(t){
