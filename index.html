@@ -115,6 +115,10 @@ header{flex:0 0 auto;display:flex;align-items:center;gap:26px;padding:0 20px;hei
   background:var(--p0);border-bottom:1px solid var(--ln)}
 .viewbar .hint{color:var(--mu);font-size:11px}
 .viewbar .ghost{margin-left:auto}
+.viewbar #printReport{margin-left:0}
+.fullscreen-status{color:var(--cp-danger);font-size:11px}
+html:fullscreen{background:var(--bg)}
+html:fullscreen body{height:100dvh}
 #workbench[hidden],#report[hidden]{display:none}
 #report{flex:1;min-height:0;overflow:auto;background:var(--cp-bg);color:var(--cp-text);
   font-family:"Segoe UI",Aptos,Calibri,-apple-system,BlinkMacSystemFont,sans-serif}
@@ -414,7 +418,9 @@ tbody tr.sel{background:var(--trs);box-shadow:inset 2px 0 0 var(--glow)}
     <button type="button" data-view="report" aria-pressed="false" aria-controls="report">汇报总览</button>
   </div>
   <span class="hint">汇报图表跟随当前筛选 · 点击条形 / 图例筛选 · SVG 可用于汇报材料</span>
+  <button class="ghost" type="button" id="fullscreenToggle" aria-pressed="false" title="全屏显示 dashboard，按 Esc 退出">⛶ 全屏展示</button>
   <button class="ghost" type="button" id="printReport">打印汇报 / 保存 PDF</button>
+  <span class="fullscreen-status" id="fullscreenStatus" role="status" hidden></span>
 </nav>
 <div class="fbar">
   <div class="srch">
@@ -9896,6 +9902,32 @@ $('report').addEventListener('keydown',event=>{
   if(target){event.preventDefault();filterFromReport(target)}
 });
 $('printReport').onclick=()=>{setView('report');window.print()};
+const fullscreenButton=$('fullscreenToggle'),fullscreenStatus=$('fullscreenStatus');
+function syncFullscreen(){
+  const active=!!document.fullscreenElement;
+  fullscreenButton.textContent=active?'⛶ 退出全屏':'⛶ 全屏展示';
+  fullscreenButton.setAttribute('aria-pressed',String(active));
+  fullscreenButton.title=active?'退出全屏，也可按 Esc':'全屏显示 dashboard，按 Esc 退出';
+  requestAnimationFrame(draw);
+}
+fullscreenButton.onclick=async()=>{
+  fullscreenStatus.hidden=true;
+  if(!document.fullscreenElement&&(!document.fullscreenEnabled||!document.documentElement.requestFullscreen)){
+    fullscreenStatus.textContent='当前浏览器不支持网页全屏，请使用浏览器菜单或 F11。';
+    fullscreenStatus.hidden=false;return;
+  }
+  fullscreenButton.disabled=true;
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  }catch(error){
+    fullscreenStatus.textContent='无法切换全屏：'+error.message+'。可使用浏览器菜单或 F11。';
+    fullscreenStatus.hidden=false;
+  }finally{
+    fullscreenButton.disabled=false;syncFullscreen();
+  }
+};
+document.addEventListener('fullscreenchange',syncFullscreen);
 let printTheme=null;
 addEventListener('beforeprint',()=>{
   if(printTheme===null)printTheme=document.documentElement.getAttribute('data-theme');
